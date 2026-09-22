@@ -14,6 +14,7 @@ import com.sonu.enums.IncidentSeverity;
 import com.sonu.enums.IncidentStatus;
 import com.sonu.exceptions.IncidentNotFoundException;
 import com.sonu.exceptions.InvalidIncidentStatusTransitionException;
+import com.sonu.kafka.EventPublisher;
 import com.sonu.repository.IncidentRepository;
 
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.List;
 public class IncidentServiceImpl implements IncidentService {
 
     private final IncidentRepository incidentRepository;
+    private final EventPublisher eventPublisher;
 
     @Override
     public IncidentResponse createIncident(CreateIncidentRequest request) {
@@ -37,11 +39,11 @@ public class IncidentServiceImpl implements IncidentService {
 
         incident.setCategory(IncidentCategory.OTHER);
         incident.setSeverity(IncidentSeverity.LOW);
-
-        incident.setStatus(
-                IncidentStatus.REPORTED);
+        incident.setStatus(IncidentStatus.REPORTED);
 
         Incident savedIncident = incidentRepository.save(incident);
+
+        eventPublisher.publishIncidentCreated(savedIncident);
 
         return mapToResponse(savedIncident);
     }
