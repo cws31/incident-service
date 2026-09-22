@@ -97,6 +97,24 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+    @ExceptionHandler(InvalidIncidentStatusTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidStatusTransition(
+            InvalidIncidentStatusTransitionException exception,
+            HttpServletRequest request) {
+
+        ErrorResponse response = new ErrorResponse(
+                Instant.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "INVALID_STATUS_TRANSITION",
+                exception.getMessage(),
+                request.getRequestURI(),
+                null);
+
+        return ResponseEntity
+                .badRequest()
+                .body(response);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralException(
             Exception exception,

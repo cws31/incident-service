@@ -13,6 +13,7 @@ import com.sonu.enums.IncidentCategory;
 import com.sonu.enums.IncidentSeverity;
 import com.sonu.enums.IncidentStatus;
 import com.sonu.exceptions.IncidentNotFoundException;
+import com.sonu.exceptions.InvalidIncidentStatusTransitionException;
 import com.sonu.repository.IncidentRepository;
 
 import java.util.List;
@@ -91,11 +92,57 @@ public class IncidentServiceImpl implements IncidentService {
         Incident incident = incidentRepository.findById(id)
                 .orElseThrow(() -> new IncidentNotFoundException(id));
 
-        incident.setStatus(request.status());
+        IncidentStatus currentStatus = incident.getStatus();
+        IncidentStatus requestedStatus = request.status();
+
+        validateStatusTransition(currentStatus, requestedStatus);
+
+        incident.setStatus(requestedStatus);
 
         Incident updatedIncident = incidentRepository.save(incident);
 
         return mapToResponse(updatedIncident);
+    }
+
+    private void validateStatusTransition(
+            IncidentStatus currentStatus,
+            IncidentStatus requestedStatus) {
+
+        if (currentStatus == requestedStatus) {
+            return;
+        }
+
+        boolean validTransition = switch (currentStatus) {
+
+            case REPORTED ->
+                requestedStatus == IncidentStatus.ANALYZING
+                        || requestedStatus == IncidentStatus.CANCELLED;
+
+            case ANALYZING ->
+                requestedStatus == IncidentStatus.ANALYZED
+                        || requestedStatus == IncidentStatus.CANCELLED;
+
+            case ANALYZED ->
+                requestedStatus == IncidentStatus.ASSIGNED
+                        || requestedStatus == IncidentStatus.CANCELLED;
+
+            case ASSIGNED ->
+                requestedStatus == IncidentStatus.IN_PROGRESS
+                        || requestedStatus == IncidentStatus.CANCELLED;
+
+            case IN_PROGRESS ->
+                requestedStatus == IncidentStatus.RESOLVED
+                        || requestedStatus == IncidentStatus.CANCELLED;
+
+            case RESOLVED, CANCELLED ->
+                false;
+        };
+
+        if (!validTransition) {
+            throw new InvalidIncidentStatusTransitionException(
+                    currentStatus,
+                    requestedStatus);
+        }
     }
 
     private IncidentResponse mapToResponse(Incident incident) {
