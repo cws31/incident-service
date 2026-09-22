@@ -38,4 +38,32 @@ public class IncidentEventProducer implements EventPublisher {
                 String.valueOf(incident.getId()),
                 event);
     }
+
+    @Override
+public void publishIncidentStatusChanged(
+        Incident incident,
+        String previousStatus,
+        String newStatus
+) {
+    IncidentStatusChangedData data =
+            new IncidentStatusChangedData(
+                    previousStatus,
+                    newStatus
+            );
+
+    IncidentStatusChangedEvent event =
+            new IncidentStatusChangedEvent(
+                    UUID.randomUUID(),
+                    "INCIDENT_STATUS_CHANGED",
+                    incident.getId(),
+                    Instant.now(),
+                    data
+            );
+
+    kafkaTemplate.send(
+            "incident.status.changed",
+            String.valueOf(incident.getId()),
+            event
+    );
+}
 }

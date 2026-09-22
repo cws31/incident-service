@@ -103,6 +103,11 @@ public class IncidentServiceImpl implements IncidentService {
 
         Incident updatedIncident = incidentRepository.save(incident);
 
+        eventPublisher.publishIncidentStatusChanged(
+                updatedIncident,
+                currentStatus.name(),
+                requestedStatus.name());
+
         return mapToResponse(updatedIncident);
     }
 
