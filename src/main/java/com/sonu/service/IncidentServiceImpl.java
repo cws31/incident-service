@@ -101,6 +101,13 @@ public class IncidentServiceImpl implements IncidentService {
         IncidentStatus currentStatus = incident.getStatus();
         IncidentStatus requestedStatus = request.status();
 
+        if (currentStatus == requestedStatus) {
+            return new IncidentStatusResponse(
+                    incident.getId(),
+                    incident.getStatus().name(),
+                    incident.getUpdatedAt());
+        }
+
         validateStatusTransition(currentStatus, requestedStatus);
 
         incident.setStatus(requestedStatus);

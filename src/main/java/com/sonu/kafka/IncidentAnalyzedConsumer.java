@@ -1,9 +1,11 @@
 package com.sonu.kafka;
 
 import com.sonu.entity.Incident;
+import com.sonu.entity.IncidentHistory;
 import com.sonu.enums.IncidentCategory;
 import com.sonu.enums.IncidentSeverity;
 import com.sonu.enums.IncidentStatus;
+import com.sonu.repository.IncidentHistoryRepository;
 import com.sonu.repository.IncidentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class IncidentAnalyzedConsumer {
 
     private final IncidentRepository incidentRepository;
+    private final IncidentHistoryRepository incidentHistoryRepository;
 
     @KafkaListener(topics = "incident.analyzed", groupId = "incident-service")
     @Transactional
@@ -27,6 +30,8 @@ public class IncidentAnalyzedConsumer {
                 .orElseThrow(() -> new RuntimeException(
                         "Incident not found: " + event.incidentId()));
 
+        IncidentStatus previousStatus = incident.getStatus();
+
         incident.setCategory(
                 IncidentCategory.valueOf(event.data().category()));
 
@@ -35,12 +40,23 @@ public class IncidentAnalyzedConsumer {
 
         incident.setStatus(IncidentStatus.ANALYZED);
 
-        incidentRepository.save(incident);
+        Incident updatedIncident = incidentRepository.save(incident);
+
+        // Record status change in incident history
+        if (previousStatus != IncidentStatus.ANALYZED) {
+            IncidentHistory history = new IncidentHistory();
+
+            history.setIncidentId(updatedIncident.getId());
+            history.setPreviousStatus(previousStatus.name());
+            history.setNewStatus(IncidentStatus.ANALYZED.name());
+
+            incidentHistoryRepository.save(history);
+        }
 
         System.out.println(
-                ">>> INCIDENT UPDATED: id=" + incident.getId()
-                        + ", category=" + incident.getCategory()
-                        + ", severity=" + incident.getSeverity()
-                        + ", status=" + incident.getStatus());
+                ">>> INCIDENT UPDATED: id=" + updatedIncident.getId()
+                        + ", category=" + updatedIncident.getCategory()
+                        + ", severity=" + updatedIncident.getSeverity()
+                        + ", status=" + updatedIncident.getStatus());
     }
 }
