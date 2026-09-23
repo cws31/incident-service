@@ -3,13 +3,14 @@ package com.sonu.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.sonu.repository.IncidentHistoryRepository;
 import com.sonu.dto.CreateIncidentRequest;
 import com.sonu.dto.IncidentResponse;
 import com.sonu.dto.IncidentStatusResponse;
 import com.sonu.dto.UpdateIncidentRequest;
 import com.sonu.dto.UpdateIncidentStatusRequest;
 import com.sonu.entity.Incident;
+import com.sonu.entity.IncidentHistory;
 import com.sonu.enums.IncidentCategory;
 import com.sonu.enums.IncidentSeverity;
 import com.sonu.enums.IncidentStatus;
@@ -27,6 +28,7 @@ public class IncidentServiceImpl implements IncidentService {
 
     private final IncidentRepository incidentRepository;
     private final EventPublisher eventPublisher;
+    private final IncidentHistoryRepository incidentHistoryRepository;
 
     @Override
     public IncidentResponse createIncident(CreateIncidentRequest request) {
@@ -103,6 +105,14 @@ public class IncidentServiceImpl implements IncidentService {
         incident.setStatus(requestedStatus);
 
         Incident updatedIncident = incidentRepository.save(incident);
+
+        IncidentHistory history = new IncidentHistory();
+
+        history.setIncidentId(updatedIncident.getId());
+        history.setPreviousStatus(currentStatus.name());
+        history.setNewStatus(requestedStatus.name());
+
+        incidentHistoryRepository.save(history);
 
         eventPublisher.publishIncidentStatusChanged(
                 updatedIncident,
