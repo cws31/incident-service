@@ -5,7 +5,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import com.sonu.entity.Incident;
-
+import org.springframework.kafka.support.SendResult;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -36,7 +36,15 @@ public class IncidentEventProducer implements EventPublisher {
         kafkaTemplate.send(
                 INCIDENT_CREATED_TOPIC,
                 String.valueOf(incident.getId()),
-                event);
+                event).whenComplete((result, exception) -> {
+                    if (exception != null) {
+                        System.err.println(
+                                "Failed to publish incident.created event for incident "
+                                        + incident.getId()
+                                        + ": "
+                                        + exception.getMessage());
+                    }
+                });
     }
 
     @Override
@@ -54,10 +62,17 @@ public class IncidentEventProducer implements EventPublisher {
                 incident.getId(),
                 Instant.now().toString(),
                 data);
-
         kafkaTemplate.send(
                 "incident.status.changed",
                 String.valueOf(incident.getId()),
-                event);
+                event).whenComplete((result, exception) -> {
+                    if (exception != null) {
+                        System.err.println(
+                                "Failed to publish incident.status.changed event for incident "
+                                        + incident.getId()
+                                        + ": "
+                                        + exception.getMessage());
+                    }
+                });
     }
 }
