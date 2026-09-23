@@ -26,6 +26,13 @@ public class IncidentAnalyzedConsumer {
         System.out.println(
                 ">>> INCIDENT ANALYZED EVENT RECEIVED: " + event);
 
+        if (incidentHistoryRepository.existsByEventId(event.eventId())) {
+            System.out.println(
+                    ">>> DUPLICATE INCIDENT ANALYZED EVENT IGNORED: "
+                            + event.eventId());
+            return;
+        }
+
         Incident incident = incidentRepository.findById(event.incidentId())
                 .orElseThrow(() -> new RuntimeException(
                         "Incident not found: " + event.incidentId()));
@@ -42,11 +49,12 @@ public class IncidentAnalyzedConsumer {
 
         Incident updatedIncident = incidentRepository.save(incident);
 
-        // Record status change in incident history
         if (previousStatus != IncidentStatus.ANALYZED) {
+
             IncidentHistory history = new IncidentHistory();
 
             history.setIncidentId(updatedIncident.getId());
+            history.setEventId(event.eventId());
             history.setPreviousStatus(previousStatus.name());
             history.setNewStatus(IncidentStatus.ANALYZED.name());
 
