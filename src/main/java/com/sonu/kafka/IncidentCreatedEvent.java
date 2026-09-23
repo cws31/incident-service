@@ -7,6 +7,6 @@ public record IncidentCreatedEvent(
         UUID eventId,
         String eventType,
         Long incidentId,
-        Instant timestamp,
+        String timestamp,
         IncidentEventData data) {
 }
