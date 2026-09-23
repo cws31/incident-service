@@ -3,6 +3,7 @@ package com.sonu.service;
 import java.util.List;
 
 import com.sonu.dto.CreateIncidentRequest;
+import com.sonu.dto.IncidentHistoryResponse;
 import com.sonu.dto.IncidentResponse;
 import com.sonu.dto.IncidentStatusResponse;
 import com.sonu.dto.UpdateIncidentRequest;
@@ -21,4 +22,6 @@ public interface IncidentService {
     IncidentStatusResponse updateIncidentStatus(
             Long id,
             UpdateIncidentStatusRequest request);
+
+    List<IncidentHistoryResponse> getIncidentHistory(Long id);
 }

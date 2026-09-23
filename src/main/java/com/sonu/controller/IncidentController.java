@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.sonu.dto.CreateIncidentRequest;
+import com.sonu.dto.IncidentHistoryResponse;
 import com.sonu.dto.IncidentResponse;
 import com.sonu.dto.IncidentStatusResponse;
 import com.sonu.dto.UpdateIncidentRequest;
@@ -62,5 +63,13 @@ public class IncidentController {
 
         return ResponseEntity.ok(
                 incidentService.updateIncidentStatus(id, request));
+    }
+
+    @GetMapping("/{id}/history")
+    public ResponseEntity<List<IncidentHistoryResponse>> getIncidentHistory(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                incidentService.getIncidentHistory(id));
     }
 }

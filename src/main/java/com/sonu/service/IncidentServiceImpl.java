@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.sonu.repository.IncidentHistoryRepository;
 import com.sonu.dto.CreateIncidentRequest;
+import com.sonu.dto.IncidentHistoryResponse;
 import com.sonu.dto.IncidentResponse;
 import com.sonu.dto.IncidentStatusResponse;
 import com.sonu.dto.UpdateIncidentRequest;
@@ -166,6 +167,23 @@ public class IncidentServiceImpl implements IncidentService {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<IncidentHistoryResponse> getIncidentHistory(Long id) {
+
+        incidentRepository.findById(id)
+                .orElseThrow(() -> new IncidentNotFoundException(id));
+
+        return incidentHistoryRepository
+                .findByIncidentIdOrderByChangedAtAsc(id)
+                .stream()
+                .map(history -> new IncidentHistoryResponse(
+                        history.getPreviousStatus(),
+                        history.getNewStatus(),
+                        history.getChangedAt()))
+                .toList();
+    }
+
     private IncidentResponse mapToResponse(Incident incident) {
 
         return new IncidentResponse(
@@ -180,4 +198,5 @@ public class IncidentServiceImpl implements IncidentService {
                 incident.getCreatedAt(),
                 incident.getUpdatedAt());
     }
+
 }
