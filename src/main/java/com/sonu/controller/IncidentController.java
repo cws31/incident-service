@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.sonu.dto.CreateIncidentRequest;
 import com.sonu.dto.IncidentResponse;
+import com.sonu.dto.IncidentStatusResponse;
 import com.sonu.dto.UpdateIncidentRequest;
 import com.sonu.dto.UpdateIncidentStatusRequest;
 import com.sonu.service.IncidentService;
@@ -55,7 +56,7 @@ public class IncidentController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<IncidentResponse> updateIncidentStatus(
+    public ResponseEntity<IncidentStatusResponse> updateIncidentStatus(
             @PathVariable Long id,
             @Valid @RequestBody UpdateIncidentStatusRequest request) {
 

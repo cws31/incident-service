@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.sonu.dto.CreateIncidentRequest;
 import com.sonu.dto.IncidentResponse;
+import com.sonu.dto.IncidentStatusResponse;
 import com.sonu.dto.UpdateIncidentRequest;
 import com.sonu.dto.UpdateIncidentStatusRequest;
 
@@ -17,7 +18,7 @@ public interface IncidentService {
 
     IncidentResponse updateIncident(Long id, UpdateIncidentRequest request);
 
-    IncidentResponse updateIncidentStatus(
+    IncidentStatusResponse updateIncidentStatus(
             Long id,
             UpdateIncidentStatusRequest request);
 }

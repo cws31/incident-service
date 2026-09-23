@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.sonu.dto.CreateIncidentRequest;
 import com.sonu.dto.IncidentResponse;
+import com.sonu.dto.IncidentStatusResponse;
 import com.sonu.dto.UpdateIncidentRequest;
 import com.sonu.dto.UpdateIncidentStatusRequest;
 import com.sonu.entity.Incident;
@@ -87,7 +88,7 @@ public class IncidentServiceImpl implements IncidentService {
     }
 
     @Override
-    public IncidentResponse updateIncidentStatus(
+    public IncidentStatusResponse updateIncidentStatus(
             Long id,
             UpdateIncidentStatusRequest request) {
 
@@ -108,7 +109,10 @@ public class IncidentServiceImpl implements IncidentService {
                 currentStatus.name(),
                 requestedStatus.name());
 
-        return mapToResponse(updatedIncident);
+        return new IncidentStatusResponse(
+                updatedIncident.getId(),
+                updatedIncident.getStatus().name(),
+                updatedIncident.getUpdatedAt());
     }
 
     private void validateStatusTransition(
