@@ -1,11 +1,10 @@
 package com.sonu.kafka;
 
+import com.sonu.entity.Incident;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
-import com.sonu.entity.Incident;
-import org.springframework.kafka.support.SendResult;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -14,6 +13,8 @@ import java.util.UUID;
 public class IncidentEventProducer implements EventPublisher {
 
     private static final String INCIDENT_CREATED_TOPIC = "incident.created";
+    private static final String INCIDENT_STATUS_CHANGED_TOPIC =
+            "incident.status.changed";
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -24,27 +25,23 @@ public class IncidentEventProducer implements EventPublisher {
                 incident.getTitle(),
                 incident.getDescription(),
                 incident.getLatitude(),
-                incident.getLongitude());
+                incident.getLongitude()
+        );
 
         IncidentCreatedEvent event = new IncidentCreatedEvent(
                 UUID.randomUUID(),
                 "INCIDENT_CREATED",
                 incident.getId(),
                 Instant.now().toString(),
-                data);
+                data
+        );
 
-        kafkaTemplate.send(
+        publishSafely(
                 INCIDENT_CREATED_TOPIC,
                 String.valueOf(incident.getId()),
-                event).whenComplete((result, exception) -> {
-                    if (exception != null) {
-                        System.err.println(
-                                "Failed to publish incident.created event for incident "
-                                        + incident.getId()
-                                        + ": "
-                                        + exception.getMessage());
-                    }
-                });
+                event,
+                incident.getId()
+        );
     }
 
     @Override
@@ -52,27 +49,61 @@ public class IncidentEventProducer implements EventPublisher {
             Incident incident,
             String previousStatus,
             String newStatus) {
-        IncidentStatusChangedData data = new IncidentStatusChangedData(
-                previousStatus,
-                newStatus);
 
-        IncidentStatusChangedEvent event = new IncidentStatusChangedEvent(
-                UUID.randomUUID(),
-                "INCIDENT_STATUS_CHANGED",
-                incident.getId(),
-                Instant.now().toString(),
-                data);
-        kafkaTemplate.send(
-                "incident.status.changed",
+        IncidentStatusChangedData data =
+                new IncidentStatusChangedData(
+                        previousStatus,
+                        newStatus
+                );
+
+        IncidentStatusChangedEvent event =
+                new IncidentStatusChangedEvent(
+                        UUID.randomUUID(),
+                        "INCIDENT_STATUS_CHANGED",
+                        incident.getId(),
+                        Instant.now().toString(),
+                        data
+                );
+
+        publishSafely(
+                INCIDENT_STATUS_CHANGED_TOPIC,
                 String.valueOf(incident.getId()),
-                event).whenComplete((result, exception) -> {
-                    if (exception != null) {
-                        System.err.println(
-                                "Failed to publish incident.status.changed event for incident "
-                                        + incident.getId()
-                                        + ": "
-                                        + exception.getMessage());
-                    }
-                });
+                event,
+                incident.getId()
+        );
+    }
+
+    private void publishSafely(
+            String topic,
+            String key,
+            Object event,
+            Long incidentId) {
+
+        try {
+
+            kafkaTemplate.send(topic, key, event)
+                    .whenComplete((result, exception) -> {
+
+                        if (exception != null) {
+                            System.err.println(
+                                    "Failed to publish Kafka event. "
+                                            + "topic=" + topic
+                                            + ", incidentId=" + incidentId
+                                            + ", error="
+                                            + exception.getMessage()
+                            );
+                        }
+                    });
+
+        } catch (RuntimeException exception) {
+
+            System.err.println(
+                    "Kafka unavailable. Event could not be published. "
+                            + "topic=" + topic
+                            + ", incidentId=" + incidentId
+                            + ", error="
+                            + exception.getMessage()
+            );
+        }
     }
 }
